@@ -2,8 +2,9 @@
 from tkinter import filedialog; from tkinter import *; from tkinter.font import Font; import os; from timeformation import *; from random import randint, shuffle
 import time, datetime, json
 from gensudoku import gensudoku
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from fake_useragent import UserAgent
+import requests
+ua = UserAgent()
 
 #initialize root window
 root = Tk(); root.config(bg='white'); root.title('SUDOKU'); root.geometry('1120x900+400+60'); root.resizable(False, False)
@@ -51,7 +52,6 @@ def sort():
 			if len(ebox[i][i2].get()) == 1:
 				status[i][i2] = 0
 	#button.config(state=DISABLED)
-	print(status)
 
 maincanvas = Canvas(root, width=900, height=900, bg='white', highlightthickness=0); maincanvas.place(x=30, y=10)
 
@@ -258,7 +258,8 @@ def clear():
 	button.config(state=NORMAL)
 	for i in range(9):
 		for i2 in range(9):
-			ebox[i][i2].config(bg='white', disabledbackground='white')
+			ebox[i][i2].config(bg='white', disabledbackground='white', font=numfont)
+			status[i][i2] = 0
 	
 def imports():
 	global starttime
@@ -318,16 +319,11 @@ def new():
 			board  = gensudoku(difficulty)
 			blank_board = board
 		else:
-			option = Options()
-			option.add_argument('--headless')
-			driver = webdriver.Chrome(options=option)
-			driver.get('http://dailysudoku.com/cgi-bin/sudoku/get_board.pl')
-			board = json.loads(driver.find_element_by_tag_name('body').get_attribute('innerHTML'))['numbers'].replace('.', '0')
+			header = {'User-Agent': ua.random}
+			board = json.loads(requests.get('http://dailysudoku.com/cgi-bin/sudoku/get_board.pl', headers=header).content.decode('utf-8'))['numbers'].replace('.', '0')
 			board = [board[x:x+9] for x in range(0, len(board), 9)]
 			board = [[int(j) for j in list(i)] for i in board]
 			blank_board = board
-			driver.close()
-			driver.quit
 		button.config(state=NORMAL)
 		starttime = time.time()
 		counterrun = True
@@ -337,8 +333,6 @@ def new():
 
 		inittab.place_forget()
 
-		reader = open('answer.sudoku', 'r')
-		answer = [list(i.replace('\n', '')) for i in reader.readlines()]
 		status = [[0 for i in range(9)] for j in range(9)]
 
 		for i in range(9):
