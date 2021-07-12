@@ -3,7 +3,7 @@
 
 this is an app currently in beta version.
 
-Beta Features:
+### Beta Features:
 - [x] Clean UI
 - [x] Customizable theme
 - [x] 3 difficulty of algorithm generated boards
@@ -15,7 +15,7 @@ Beta Features:
 - [x] Play your own board
 - [x] Save board for later
 
-Remake Features:
+### Remake Features:
 - [x] Clean UI
 - [ ] Customizable theme
 - [ ] 3 difficulty of algorithm generated boards
