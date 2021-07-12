@@ -1,5 +1,5 @@
 # The Sudoku
-## A nice sodoku GUI made with tkinter
+## A nice sodoku solving environment made with tkinter
 
 this is an app currently in beta version.
 
