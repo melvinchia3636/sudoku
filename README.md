@@ -12,7 +12,6 @@ The beta version of this solving environment is one of my early project that I'v
 - [x] Record every board you've done
 - [x] Cell highlighting
 - [x] Insert multiple candidates in one cell
-- [ ] Multicolor cell marking
 - [x] Play your own board
 - [x] Save board for later
 
