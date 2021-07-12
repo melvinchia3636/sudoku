@@ -6,8 +6,8 @@ The beta version of this solving environment is one of my early project that I'v
 
 ## Screenshots
 
-![GUI Screenshot](https://github.com/melvinchia3636/sudoku/blob/21d1b3fb8867ed9573af6477a68fd40d365d0948/screenshot/beta.png)
-![GUI Screenshot](https://github.com/melvinchia3636/sudoku/blob/21d1b3fb8867ed9573af6477a68fd40d365d0948/screenshot/beta2.png)
+![GUI Screenshot](https://github.com/melvinchia3636/sudoku/blob/4c25945b35b20b20df62f24142d9db380e962373/screenshot/beta.png)
+![GUI Screenshot](https://github.com/melvinchia3636/sudoku/blob/4c25945b35b20b20df62f24142d9db380e962373/screenshot/beta2.png)
 
 ### Features
 - [x] Clean UI
@@ -25,7 +25,7 @@ The remake version was made a year after the beta version had been released. My 
 
 ## Screenshots
 
-![GUI Screenshot](https://github.com/melvinchia3636/sudoku/blob/21d1b3fb8867ed9573af6477a68fd40d365d0948/screenshot/remake.png)
+![GUI Screenshot](https://github.com/melvinchia3636/sudoku/blob/4c25945b35b20b20df62f24142d9db380e962373/screenshot/remake.png)
 
 ### Features:
 - [x] Clean UI
