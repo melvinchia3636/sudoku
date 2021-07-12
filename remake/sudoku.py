@@ -1,13 +1,19 @@
 from tkinter import *
 from tkinter.font import Font
 from functools import partial
+import requests
+from fake_useragent import UserAgent as ua
 
 class GameGrid(Tk):
 	def __init__(self):
 		super(GameGrid, self).__init__()
 		
 		self.board_width, self.board_height = (9, 9)
+		self.region_width, self.region_height = (3, 3)
 		self.outer_border_width, self.inner_border_width = (5, 2)
+		self.font_size = 28
+		self.height_add = 10
+
 		self.background = "#f6f5f7"
 		self.foreground = "#4450ff"
 		self.hover_background = "#D8D8D8"
@@ -25,6 +31,9 @@ class GameGrid(Tk):
 		self.settings_icon = PhotoImage(file="assets/settings.png")
 
 		self.current_selected_cell = None
+		self.current_highlight_cells = []
+		self.current_board = [[0 for _ in range(self.board_width)] for _ in range(self.board_height)]
+		self.current_board_editable_map = [[True for _ in range(self.board_width)] for _ in range(self.board_height)]
 
 		self.title('Sudoku')
 		self.config(background=self.background)
@@ -33,6 +42,7 @@ class GameGrid(Tk):
 		self.setupWidget()
 		self.placeWidget()
 		self.setupEvent()
+		self.generateBoard()
 
 	def setupWidget(self):
 		self.grid_container = Frame(self, bg=self.foreground)
@@ -47,13 +57,13 @@ class GameGrid(Tk):
 					disabledbackground=self.background,
 					disabledforeground=self.foreground,
 					state="disabled",
-					font=Font(size=28, weight="bold"),
+					font=Font(size=self.font_size, weight="bold"),
 					cursor="arrow"
 				) for _ in range(self.board_width)
 			] for _ in range(self.board_height)
 		]
 
-		self.button_container = Frame(self)
+		self.button_container = Frame(self, bg=self.background)
 		self.new_button = Button(self.button_container, image=self.new_icon, relief="flat", bg=self.background)
 		self.check_button = Button(self.button_container, image=self.check_icon, relief="flat", bg=self.background)
 		self.file_button = Button(self.button_container, image=self.file_icon, relief="flat", bg=self.background)
@@ -70,9 +80,9 @@ class GameGrid(Tk):
 				self.grid[y][x].grid(
 					row=y, 
 					column=x, 
-					ipady=10, 
-					padx=(self.outer_border_width, 0) if not x%3 else (self.inner_border_width, self.outer_border_width if (x+1) == self.board_width else 0), 
-					pady=(self.outer_border_width, 0) if not y%3 else (self.inner_border_width, self.outer_border_width if (y+1) == self.board_height else 0)
+					ipady=self.height_add, 
+					padx=(self.outer_border_width, 0) if not x%self.region_width else (self.inner_border_width, self.outer_border_width if (x+1) == self.board_width else 0), 
+					pady=(self.outer_border_width, 0) if not y%self.region_height else (self.inner_border_width, self.outer_border_width if (y+1) == self.board_height else 0)
 				) for x in range(self.board_width)
 			] for y in range(self.board_height)
 		]
@@ -87,35 +97,97 @@ class GameGrid(Tk):
 		self.file_button.pack(pady=10)
 		self.settings_button.pack(pady=10)
 
-	def onCellMouseLeaveCallback(self, y, x, e):
-		e.widget.configure(disabledbackground=self.foreground if self.current_selected_cell == (y, x) else self.background)
+	def writeCell(self, y, x, i):
+		cell = self.grid[y][x]
+		cell.config(state='normal')
+		cell.delete(0, 'end')
+		cell.insert(0, str(i))
+		cell.config(state='disabled')
 
-	def onCellMouseEnterCallback(self, y, x, e):
-		e.widget.configure(disabledbackground=self.foreground if self.current_selected_cell == (y, x) else self.hover_background)
+	def updateBoard(self, run="ingame"):
+		if run == "ingame":
+			for y in range(self.board_height):
+				for x in range(self.board_width):
+					cell_content = self.grid[y][x].get()
+					if not cell_content or not cell_content.isdigit(): num = 0
+					else: num = int(cell_content)
+					self.current_board[y][x] = num
 
-	def selectCellCallback(self, y, x, e):
+		elif run == "new":
+			for y in range(self.board_height):
+				for x in range(self.board_width):
+					num = self.current_board[y][x]
+					self.writeCell(y, x, num if num else "")
+		else: return
+
+	def updateHighlight(self):
 		if self.current_selected_cell:
 			_y, _x = self.current_selected_cell
-			self.grid[_y][_x].config(disabledbackground=self.background, disabledforeground=self.foreground)
-		self.grid[y][x].config(disabledbackground=self.selected_background, disabledforeground=self.selected_foreground)
+			current_selected_cell = self.grid[_y][_x].get()
+			if not current_selected_cell or not current_selected_cell.isdigit(): 
+				self.current_highlight_cells = []
+				return
+			else: current_selected_num = int(current_selected_cell)
+
+			for y in range(self.board_height):
+				for x in range(self.board_width):
+					cell = (y, x)
+					cell_content = self.grid[y][x].get()
+					if not cell_content or not cell_content.isdigit(): continue
+					else: num = int(cell_content)
+
+					if num == current_selected_num:
+						if cell not in self.current_highlight_cells:
+							if num == current_selected_num and cell:
+								self.current_highlight_cells.append(cell)
+					else:
+						if cell in self.current_highlight_cells:
+							self.current_highlight_cells.remove(cell)
+
+	def renderHighlight(self):
+		for y in range(self.board_height):
+			for x in range(self.board_width):
+				cell = (y, x)
+				if cell in self.current_highlight_cells or cell == self.current_selected_cell:
+					self.grid[y][x].config(disabledbackground=self.selected_background, disabledforeground=self.selected_foreground)
+				else:
+					self.grid[y][x].config(disabledbackground=self.background, disabledforeground=self.foreground)
+
+	def onCellMouseLeaveCallback(self, y, x, e):
+		if self.current_selected_cell == (y, x) or (y, x) in self.current_highlight_cells:
+			e.widget.configure(disabledbackground=self.selected_background, disabledforeground=self.selected_foreground)
+		else:
+			e.widget.config(disabledbackground=self.background, disabledforeground=self.foreground)
+
+	def onCellMouseEnterCallback(self, y, x, e):
+		if self.current_selected_cell != (y, x) and (y, x) not in self.current_highlight_cells:
+			e.widget.configure(disabledbackground=self.hover_background, disabledforeground=self.hover_foreground)
+
+	def selectCellCallback(self, y, x, e):
 		self.current_selected_cell = (y, x)
+
+		self.updateHighlight()
+		self.renderHighlight()
 
 	def insertNumberCallback(self, n, e):
 		if self.current_selected_cell:
 			y, x = self.current_selected_cell
-			cell = self.grid[y][x]
-			cell.config(state='normal')
-			cell.delete(0, 'end')
-			cell.insert(0, str(n))
-			cell.config(state='disabled')
+			if self.current_board_editable_map[y][x]:
+				self.writeCell(y, x, n)
+
+				self.updateBoard()
+				self.updateHighlight()
+				self.renderHighlight()
 
 	def clearCellCallback(self, e):
 		if self.current_selected_cell:
 			y, x = self.current_selected_cell
-			cell = self.grid[y][x]
-			cell.config(state='normal')
-			cell.delete(0, 'end')
-			cell.config(state='disabled')
+			if self.current_board_editable_map[y][x]:
+				self.writeCell(y, x, "")
+
+				self.updateBoard()
+				self.updateHighlight()
+				self.renderHighlight()
 
 	def setupEvent(self): 
 		[
@@ -130,6 +202,36 @@ class GameGrid(Tk):
 		]
 		[self.bind(str(i), partial(self.insertNumberCallback, i)) for i in range(1, 10)],
 		self.bind('<BackSpace>', self.clearCellCallback)
+
+	def generateEditableMap(self):
+		editable_map = []
+		for y in range(self.board_height):
+			editable_map.append([])
+			for x in range(self.board_width):
+				if self.current_board[y][x]: is_editable = False
+				else: is_editable = True
+				editable_map[-1].append(is_editable)
+
+		self.current_board_editable_map = editable_map
+
+	def generateBoard(self):
+		request_headers = {
+			'x-requested-with': 'XMLHttpRequest', 
+			'user-agent': ua().random
+		}
+		response = requests.get('https://sudoku.com/api/level/hard', headers=request_headers).json()
+		if response:
+			raw_data = response["mission"]
+			board = [[int(j) for j in raw_data[i:i+self.board_width]] for i in range(0, self.board_width*self.board_height, self.board_height)]
+			
+			if len(board[0]) == self.board_width and len(board) == self.board_height:
+				self.current_board = board
+				self.updateBoard(run="new")
+				self.generateEditableMap()
+			else:
+				raise RuntimeError('Sudoku board size doesn\'t match')
+		else:
+			raise RuntimeError('Sudoku board fetching failed')
 
 root = GameGrid()
 root.mainloop()
