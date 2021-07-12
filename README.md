@@ -1,5 +1,5 @@
 # The Sudoku
-## A nice sodoku solving environment made with tkinter
+A nice sodoku solving environment made with tkinter, an ideal place for people to chill out and solve some awesome sudoku boards.
 
 ## Beta:
 The beta version of this solving environment is one of my early project that I've created in 2020, back on the day when the Covid-19 crisis was spreading all over around the world like a beast. The code inside are really messy, and it's nearly unreadable. With that being said, most of the function are working just fine, except there is sometimes some minor bugs happening when solving the board, which in most cases won't affect the solving process.
