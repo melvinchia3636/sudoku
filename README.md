@@ -30,11 +30,11 @@ The remake version was made a year after the beta version had been released. My 
 ### Features:
 - [x] Clean UI
 - [ ] Customizable theme
-- [ ] 3 difficulty of algorithm generated boards
-- [ ] Daily sudoku from http://dailysudoku.com/sudoku
-- [ ] Record every board you've done
+- [x] 3 difficulty of algorithm generated boards
+- [x] Daily sudoku from http://dailysudoku.com/sudoku
+- [x] Record every board you've done
 - [x] Cell highlighting
-- [ ] Insert multiple candidates in one cell
+- [x] Insert multiple candidates in one cell
 - [ ] Multicolor cell marking
 - [ ] Play your own board
 - [ ] Save board for later
