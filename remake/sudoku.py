@@ -25,9 +25,9 @@ def adjust_color_lightness(r, g, b, factor):
     r, g, b = hls2rgb(h, l, s)
     return rgb2hex(int(r * 255), int(g * 255), int(b * 255))
 
-class GameGrid(Tk):
+class MainGame(Tk):
     def __init__(self):
-        super(GameGrid, self).__init__()
+        super(MainGame, self).__init__()
         
         self.board_width, self.board_height = (9, 9)
         self.region_width, self.region_height = (3, 3)
@@ -48,22 +48,26 @@ class GameGrid(Tk):
         self.uneditable_selected_foreground = "#ffffff"
         self.editable_selected_foreground = "#ffffff"
 
-        self.new_icon = PhotoImage(file="assets/game/new.png")
-        self.check_icon = PhotoImage(file="assets/game/check.png")
-        self.file_icon = PhotoImage(file="assets/game/file.png")
-        self.hint_icon = PhotoImage(file="assets/game/hint.png")
-        self.cleanup_icon = PhotoImage(file="assets/game/cleanup.png")
-        self.highlight_icon = PhotoImage(file="assets/game/highlight.png")
-        self.play_icon = PhotoImage(file="assets/game/play.png")
-        self.pause_icon = PhotoImage(file="assets/game/pause.png")
-        self.replay_icon = PhotoImage(file="assets/game/replay.png")
-        self.settings_icon = PhotoImage(file="assets/game/settings.png")
+        self.icon_name = ["new", "play", "redo", "hint", "cleanup", "highlight", "check", "file", "settings", "pause"]
+        self.icons = {i: PhotoImage(file=f"assets/game/{i}.png") for i in self.icon_name}
 
         self.current_selected_cell = None
         self.current_highlight_cells = []
         self.current_board = [[0 for _ in range(self.board_width)] for _ in range(self.board_height)]
         self.question_board = []
         self.current_board_editable_map = [[True for _ in range(self.board_width)] for _ in range(self.board_height)]
+
+        self.button_commands = {
+            "new": self.newBoard,
+            "play": self.resumeGame,
+            "redo": self.redoBoard,
+            "hint": self.getCandidate,
+            "cleanup": self.cleanupBoard,
+            "highlight": self.highlightCells,
+            "check": self.checkBoard,
+            "file": self.loadBoard,
+            "settings": None,
+        }
 
         self.title('Sudoku')
         self.config(background=self.background)
@@ -99,15 +103,7 @@ class GameGrid(Tk):
         ]
 
         self.button_container = Frame(self, bg=self.background)
-        self.new_button = Button(self.button_container, image=self.new_icon, relief="flat", bg=self.background, command=self.newBoard)
-        self.check_button = Button(self.button_container, image=self.check_icon, relief="flat", bg=self.background, command=self.checkBoard)
-        self.file_button = Button(self.button_container, image=self.file_icon, relief="flat", bg=self.background, command=self.loadBoard)
-        self.highlight_button = Button(self.button_container, image=self.highlight_icon, relief="flat", bg=self.background, command=self.highlightCells)
-        self.hint_button = Button(self.button_container, image=self.hint_icon, relief="flat", bg=self.background, command=self.getCandidate)
-        self.cleanup_button = Button(self.button_container, image=self.cleanup_icon, relief="flat", bg=self.background, command=self.cleanupBoard)
-        self.play_button = Button(self.button_container, image=self.pause_icon, relief="flat", bg=self.background, command=self.pauseGame)
-        self.replay_button = Button(self.button_container, image=self.replay_icon, relief="flat", bg=self.background, command=self.redoBoard)
-        self.settings_button = Button(self.button_container, image=self.settings_icon, relief="flat", bg=self.background)
+        self.buttons = {i: Button(self.button_container, image=self.icons[i], command=self.button_commands[i], bg=self.background, relief="flat") for i in self.icon_name[:-1]}
 
     def placeWidget(self):
         self.grid_container.pack(padx=(20, 0), pady=20, side="left")
@@ -137,15 +133,7 @@ class GameGrid(Tk):
         ]
 
         self.button_container.pack(side="left", padx=(10, 20))
-        self.new_button.pack(pady=10)
-        self.play_button.pack(pady=10)
-        self.replay_button.pack(pady=10)
-        self.hint_button.pack(pady=10)
-        self.cleanup_button.pack(pady=10)
-        self.highlight_button.pack(pady=10)
-        self.check_button.pack(pady=10)
-        self.file_button.pack(pady=10)
-        self.settings_button.pack(pady=10)
+        [self.buttons[i].pack(pady=10) for i in self.icon_name[:-1]]
 
     def setupEvent(self): 
         [
@@ -165,6 +153,7 @@ class GameGrid(Tk):
 
     def writeCell(self, y, x, i, t="ans"):
         cell = self.grid[y][x]
+        i = ''.join(sorted(str(i)))
 
         if t == "ans":
             cell.config(state='normal')
@@ -182,6 +171,11 @@ class GameGrid(Tk):
                 cell.delete(0, 'end')
                 cell.insert(0, new)
                 cell.config(state='disabled', font=Font(size=self.candidate_font_size, weight="bold"))
+        else:
+            cell.config(state="normal")
+            cell.delete(0, 'end')
+            cell.insert(0, str(i))
+            cell.config(state="disabled", font=Font(size=self.candidate_font_size if len(i) > 1 else self.font_size, weight="bold"))
 
     def updateBoard(self, run="ingame"):
         if run == "ingame":
@@ -344,6 +338,8 @@ class GameGrid(Tk):
         else:
             raise RuntimeError('Sudoku board fetching failed')
 
+        self.resumeGame()
+
     def redoBoard(self):
         confirm = messagebox.askquestion("Are you sure?","Are you sure you wanna redo the board? This operation is not reversible.", icon="warning")
         if confirm == "yes":
@@ -362,13 +358,14 @@ class GameGrid(Tk):
                     cell = self.current_board[y][x]
                     if len(str(cell)) > (2 if confirm else 1):
                         self.writeCell(y, x, "")
+        self.updateBoard()
 
     def pauseGame(self):
         for y in range(self.board_height):
             for x in range(self.board_width):
                 self.writeCell(y, x, "")
 
-        self.play_button.config(image=self.play_icon, command=self.resumeGame)
+        self.buttons['play'].config(image=self.icons['play'], command=self.resumeGame)
         self.escapeHighlightCallback(None)
 
     def resumeGame(self):
@@ -377,7 +374,7 @@ class GameGrid(Tk):
                 num = self.current_board[y][x]
                 self.writeCell(y, x, num if num else "")
 
-        self.play_button.config(image=self.pause_icon, command=self.pauseGame)
+        self.buttons['play'].config(image=self.icons['pause'], command=self.pauseGame)
 
     def getCandidate(self):
         for y in range(self.board_height):
@@ -392,12 +389,7 @@ class GameGrid(Tk):
                         if 0 in collection: collection.remove(0)
                         num_range = set(range(1, self.board_width+1))
                         candidates = ''.join(list(map(str, num_range.difference(collection))))
-
-                        cell = self.grid[y][x]
-                        cell.config(state="normal")
-                        cell.delete(0, 'end')
-                        cell.insert(0, candidates)
-                        cell.config(state="disabled", font=Font(size=self.candidate_font_size if len(candidates) > 1 else self.font_size, weight="bold"))
+                        self.writeCell(y, x, candidates, None)
 
         self.updateBoard()
         self.updateHighlight()
@@ -415,12 +407,7 @@ class GameGrid(Tk):
             num = self.current_board[_y][_x]
             if str(n) in str(num) and len(str(num)) > 1:
                 candidates = str(num).replace(str(n), "")
-                cell.config(state="normal")
-                cell.delete(0, 'end')
-                cell.insert(0, candidates)
-                cell.config(state="disabled", font=Font(size=self.candidate_font_size if len(candidates) > 1 else self.font_size, weight="bold"))
-                self.current_board[_y][_x] = 0
-
+                self.writeCell(_y, _x, candidates, None)
                 self.updateBoard()
 
                 if len(candidates) == 1:
@@ -480,9 +467,120 @@ class GameGrid(Tk):
         if self.newgame_window:
             self.newgame_window.destroy()
             self.newgame_window = None
+
+        if difficulty == "archive":
+            archive_win = GameArchive(self)
+            return
+
         self.escapeHighlightCallback(None)
         self.generateBoard(difficulty)
-        self.resumeGame()
+
+class GameArchive(Toplevel):
+    def __init__(self, master):
+        super().__init__(master)
+        master.withdraw()
+
+        self.board_width, self.board_height = self.master.board_width, self.master.board_height
+        self.region_width, self.region_height = self.master.region_width, self.master.region_height
+        self.outer_border_width, self.inner_border_width = self.master.outer_border_width, self.master.inner_border_width
+        self.cell_width, self.cell_height = self.master.cell_width, self.master.cell_height
+        self.font_size = self.master.font_size
+        self.candidate_font_size = self.master.candidate_font_size
+
+        # bring all color from master to here
+        self.background = self.master.background
+        self.uneditable_foreground = self.master.uneditable_foreground
+        self.editable_foreground = self.master.editable_foreground
+
+        self.hover_background = self.master.hover_background
+        self.uneditable_hover_foreground = self.master.uneditable_hover_foreground
+        self.editable_hover_foreground = self.master.editable_hover_foreground
+
+        self.selected_background = self.master.selected_background
+        self.uneditable_selected_foreground = self.master.uneditable_selected_foreground
+        self.editable_selected_foreground = self.master.editable_selected_foreground
+
+        self.question_board = self.master.question_board
+        self.current_board = self.master.current_board
+        self.current_board_editable_map = self.master.current_board_editable_map
+
+        self.icon_name = ["new", "last", "next", "delete", "answer", "play", "export", "print", "list", "settings", "question"]
+        self.icons = {i: PhotoImage(file=f"assets/archive/{i}.png") for i in self.icon_name}
+
+        self.button_commands = dict(map(lambda i: (i, None), self.icon_name))
+        
+        self.title("Game Archive")
+        self.resizable(False, False)
+        self.iconbitmap('assets/logo.ico')
+        self.config(bg=self.master.background)
+        self.protocol("WM_DELETE_WINDOW", lambda: self.quit(master))
+        self.focus_force()
+        
+        self.setupWidget()
+        self.placeWidget()
+        self.setupEvent()
+        
+        self.master.eval(f'tk::PlaceWindow {self} center')
+
+    def setupWidget(self):
+        self.grid_container = Frame(self, bg=self.master.uneditable_foreground)
+        self.cell_container = [[Frame(self.grid_container, width=self.cell_width, height=self.cell_height) for _ in range(self.board_width)] for _ in range(self.board_height)]
+        self.grid = [
+            [
+                Entry(
+                    self.cell_container[y][x], 
+                    width=3, 
+                    justify="center", 
+                    relief="flat",
+                    bg=self.master.background,
+                    disabledbackground=self.background,
+                    disabledforeground=self.master.editable_foreground if self.current_board_editable_map[y][x] else self.uneditable_foreground,
+                    state="disabled",
+                    font=Font(size=self.font_size, weight="bold"),
+                    cursor="arrow"
+                ) for x in range(self.board_width)
+            ] for y in range(self.board_height)
+        ]
+
+        self.button_container = Frame(self, bg=self.background)
+        self.buttons = {i: Button(self.button_container, image=self.icons[i], command=self.button_commands[i], bg=self.background, relief="flat") for i in self.icon_name[:-1]}
+
+    def placeWidget(self):
+        self.grid_container.pack(padx=(20, 0), pady=20, side="left")
+        [
+            [
+                self.cell_container[y][x].pack_propagate(False)
+                for x in range(self.board_width)
+            ] for y in range(self.board_height)
+        ]
+        [
+            [
+                self.cell_container[y][x].grid(
+                    row=y, 
+                    column=x,
+                    padx=(self.outer_border_width, 0) if not x%self.region_width else (self.inner_border_width, self.outer_border_width if (x+1) == self.board_width else 0), 
+                    pady=(self.outer_border_width, 0) if not y%self.region_height else (self.inner_border_width, self.outer_border_width if (y+1) == self.board_height else 0)
+                ) for x in range(self.board_width)
+            ] for y in range(self.board_height)
+        ]
+        [
+            [
+                self.grid[y][x].pack(
+                    expand=True,
+                    fill="both"
+                ) for x in range(self.board_width)
+            ] for y in range(self.board_height)
+        ]
+
+        self.button_container.pack(side="left", padx=(10, 20))
+        [self.buttons[i].pack(pady=10) for i in self.icon_name[:-1]]
+
+    def setupEvent(self):
+        ...
+
+    def quit(self, master):
+        master.deiconify()
+        self.destroy()
 
 class MenuWindow(Toplevel):
     def __init__(self, master):
@@ -493,7 +591,7 @@ class MenuWindow(Toplevel):
         self.easy_icon = PhotoImage(file='assets/menu/easy.png')
         self.medium_icon = PhotoImage(file='assets/menu/medium.png')
         self.hard_icon = PhotoImage(file='assets/menu/hard.png')
-        self.extreme_icon = PhotoImage(file='assets/menu/extreme.png')
+        self.expert_icon = PhotoImage(file='assets/menu/expert.png')
         self.custom_icon = PhotoImage(file='assets/menu/custom.png')
         self.daily_icon = PhotoImage(file='assets/menu/daily.png')
         self.stats_icon = PhotoImage(file='assets/menu/stats.png')
@@ -514,7 +612,7 @@ class MenuWindow(Toplevel):
 
     def setupWidget(self):
         self.button_container = Frame(self, bg=self.master.background)
-        self.difficulty = ['easy', 'medium', 'hard', 'extreme', 'daily', 'custom', 'stats', 'archive', 'settings']
+        self.difficulty = ['easy', 'medium', 'hard', 'expert', 'daily', 'custom', 'stats', 'archive', 'settings']
         self.options_buttons = [
             Button(
                 self.button_container, 
@@ -551,5 +649,5 @@ class MenuWindow(Toplevel):
         self.destroy()
         self.master.focus()
 
-root = GameGrid()
+root = MainGame()
 root.mainloop()
