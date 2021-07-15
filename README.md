@@ -32,7 +32,7 @@ The remake version was made a year after the beta version had been released. My 
 ### Features:
 - [x] Clean UI
 - [ ] Customizable theme
-- [x] 3 difficulty of algorithm generated boards
+- [x] 4 difficulty of algorithm generated boards
 - [x] Daily sudoku from http://dailysudoku.com/sudoku
 - [x] Record every board you've done
 - [x] Cell highlighting
@@ -40,3 +40,9 @@ The remake version was made a year after the beta version had been released. My 
 - [ ] Multicolor cell marking
 - [ ] Play your own board
 - [ ] Save board for later
+- [ ] View your statistic
+- [ ] OP Chain Mode
+- [ ] Print the sudoku board on a paper
+- [ ] Save the sudoku board to PDF Docs or Images
+- [ ] View the sudoku board archives and redo any boards if you want
+- [ ] 
