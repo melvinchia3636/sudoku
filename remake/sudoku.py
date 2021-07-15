@@ -74,6 +74,7 @@ class MainGame(Tk):
         self.iconbitmap('./assets/logo.ico')
         self.resizable(False, False)
         self.newgame_window = None
+        self.archive_window = None
 
         self.setupWidget()
         self.placeWidget()
@@ -468,8 +469,14 @@ class MainGame(Tk):
             self.newgame_window.destroy()
             self.newgame_window = None
 
+        if self.archive_window:
+            self.archive_window.destroy()
+            self.archive_window = None
+            self.deiconify()
+
         if difficulty == "archive":
-            archive_win = GameArchive(self)
+            if not self.archive_window:
+                self.archive_window = GameArchive(self)
             return
 
         self.escapeHighlightCallback(None)
@@ -500,14 +507,28 @@ class GameArchive(Toplevel):
         self.uneditable_selected_foreground = self.master.uneditable_selected_foreground
         self.editable_selected_foreground = self.master.editable_selected_foreground
 
-        self.question_board = self.master.question_board
-        self.current_board = self.master.current_board
-        self.current_board_editable_map = self.master.current_board_editable_map
+        self.question_board = None
+        self.answer_board = None
+        self.current_board_editable_map = [[True for _ in range(self.board_width)] for _ in range(self.board_height)]
 
-        self.icon_name = ["new", "last", "next", "delete", "answer", "play", "export", "print", "list", "settings", "question"]
+        self.icon_name = ["new", "last", "next", "delete", "question", "play", "export", "print", "list", "settings", "answer"]
         self.icons = {i: PhotoImage(file=f"assets/archive/{i}.png") for i in self.icon_name}
 
-        self.button_commands = dict(map(lambda i: (i, None), self.icon_name))
+        self.button_commands = {
+            'new': lambda: self.newBoard(master),
+            'last': self.loadLastBoard,
+            'next': self.loadNextBoard,
+            'delete': None,
+            'question': self.showAnswer,
+            'play': None,
+            'export': None,
+            'print': None,
+            'list': None,
+            'settings': None,
+        }
+
+        self.data = None
+        self.current_data_index = -1
         
         self.title("Game Archive")
         self.resizable(False, False)
@@ -519,6 +540,7 @@ class GameArchive(Toplevel):
         self.setupWidget()
         self.placeWidget()
         self.setupEvent()
+        self.fetchHistory()
         
         self.master.eval(f'tk::PlaceWindow {self} center')
 
@@ -534,7 +556,7 @@ class GameArchive(Toplevel):
                     relief="flat",
                     bg=self.master.background,
                     disabledbackground=self.background,
-                    disabledforeground=self.master.editable_foreground if self.current_board_editable_map[y][x] else self.uneditable_foreground,
+                    disabledforeground=self.uneditable_foreground,
                     state="disabled",
                     font=Font(size=self.font_size, weight="bold"),
                     cursor="arrow"
@@ -581,6 +603,97 @@ class GameArchive(Toplevel):
     def quit(self, master):
         master.deiconify()
         self.destroy()
+
+    def writeCell(self, y, x, i):
+        cell = self.grid[y][x]
+        cell.config(state='normal')
+        cell.delete(0, 'end')
+        cell.insert(0, str(i))
+        cell.config(state='disabled', font=Font(size=self.font_size, weight="bold"))
+
+    def fetchHistory(self):
+        with open('history.sudoku', 'r') as file:
+            data = file.read()
+            removed_messy = data[::2]
+            data_decoded = b85decode(removed_messy.encode('utf-8'))
+            self.data = json.loads(data_decoded.decode('utf-8').replace('\'', '"'))
+            self.current_data_index = len(self.data) - 1
+        
+        self.insertBoard()
+
+    def updateForeground(self):
+        for y in range(self.board_height):
+            for x in range(self.board_width):
+                if self.current_board_editable_map[y][x]:
+                    self.grid[y][x].config(disabledforeground=self.editable_foreground)
+                else:
+                    self.grid[y][x].config(disabledforeground=self.uneditable_foreground)
+
+    def generateEditableMap(self):
+        editable_map = []
+        for y in range(self.board_height):
+            editable_map.append([])
+            for x in range(self.board_width):
+                if self.question_board[y][x]: is_editable = False
+                else: is_editable = True
+                editable_map[-1].append(is_editable)
+
+        self.current_board_editable_map = editable_map
+        self.updateForeground()
+
+    def getBoard(self, board):
+        return [[int(j) for j in board[i:i+self.board_width]] for i in range(0, self.board_width*self.board_height, self.board_height)]
+
+    def clearBoard(self):
+        for y in range(self.board_height):
+            for x in range(self.board_width):
+                self.writeCell(y, x, "")
+
+    def insertBoard(self, show="q"):
+        board = self.data[self.current_data_index]
+
+        question_board = b85decode(board['question'].encode('utf-8')).decode('utf-8')
+        answer_board = b85decode(board['answer'].encode('utf-8')).decode('utf-8')
+
+        self.question_board = self.getBoard(question_board)
+        self.answer_board = self.getBoard(answer_board)
+        self.generateEditableMap()
+
+        self.clearBoard()
+
+        board_to_show = self.question_board if show == "q" else self.answer_board
+
+        for y in range(self.board_height):
+            for x in range(self.board_width):
+                num = board_to_show[y][x]
+                self.writeCell(y, x, num if num else '')
+        
+    def loadLastBoard(self):
+        if self.current_data_index > 0:
+            self.current_data_index -= 1
+            self.hideAnswer()
+
+    def loadNextBoard(self):
+        if self.current_data_index < len(self.data) - 1:
+            self.current_data_index += 1
+            self.insertBoard()
+            self.hideAnswer()
+
+    def showAnswer(self):
+        self.insertBoard("a")
+        self.buttons["question"].config(command=self.hideAnswer, image=self.icons["answer"])
+
+    def hideAnswer(self):
+        self.insertBoard()
+        self.buttons["question"].config(command=self.showAnswer, image=self.icons["question"])
+
+    def newBoard(self, master):
+
+        if not master.newgame_window:
+            master.newgame_window = MenuWindow(master)
+        else: 
+            master.newgame_window.lift()
+            master.newgame_window.focus_force()
 
 class MenuWindow(Toplevel):
     def __init__(self, master):
