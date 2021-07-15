@@ -26,8 +26,8 @@ The remake version was made a year after the beta version had been released. My 
 ## Screenshots
 
 ![GUI Screenshot](https://github.com/melvinchia3636/sudoku/blob/2d1bdbc0ea86e75cdc5e59e626ba1888074c85e1/screenshot/remake.png)
-![GUI Screenshot](https://github.com/melvinchia3636/sudoku/blob/2d1bdbc0ea86e75cdc5e59e626ba1888074c85e1/screenshot/remake%201.png)
 ![GUI Screenshot](https://github.com/melvinchia3636/sudoku/blob/5f900ac5bc790a983b19024f027607498a4f9100/screenshot/remake%202.png)
+![GUI Screenshot](https://github.com/melvinchia3636/sudoku/blob/2d1bdbc0ea86e75cdc5e59e626ba1888074c85e1/screenshot/remake%201.png)
 
 ### Features:
 - [x] Clean UI
