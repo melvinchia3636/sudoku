@@ -5,18 +5,28 @@ from tkinter import *
 from tkinter.font import Font
 from tkinter import messagebox
 
+<<<<<<< HEAD
 import time
 from datetime import date
 import string
 from functools import partial
 import requests
+=======
+import string
+from functools import partial
+import requests
+from fake_useragent import UserAgent as ua
+>>>>>>> cda2d6d98697ca5a4e2f074a58cc07d268ab6574
 from base64 import b85decode, b85encode
 import copy
 
 from colormap import rgb2hex, hex2rgb, rgb2hls, hls2rgb
 
+<<<<<<< HEAD
 USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/5311 (KHTML, like Gecko) Chrome/38.0.897.0 Mobile Safari/5311"
 
+=======
+>>>>>>> cda2d6d98697ca5a4e2f074a58cc07d268ab6574
 def hex_to_rgb(hex):
      hex = hex.lstrip('#')
      hlen = len(hex)
@@ -39,10 +49,13 @@ class MainGame(Tk):
         self.font_size = 28
         self.candidate_font_size = 12
 
+<<<<<<< HEAD
         self.start_time = time.time()
         self.current_time = 0
         self.is_playing = False
 
+=======
+>>>>>>> cda2d6d98697ca5a4e2f074a58cc07d268ab6574
         self.background = "#f6f5f7"
         self.uneditable_foreground = "#4450ff"
         self.editable_foreground = "#222222"
@@ -87,13 +100,20 @@ class MainGame(Tk):
         self.placeWidget()
         self.setupEvent()
         self.generateBoard()
+<<<<<<< HEAD
         self.startTimer()
+=======
+>>>>>>> cda2d6d98697ca5a4e2f074a58cc07d268ab6574
         
         self.eval('tk::PlaceWindow . center')
 
     def setupWidget(self):
+<<<<<<< HEAD
         self.left_container = Frame(self, bg=self.background)
         self.grid_container = Frame(self.left_container, bg=self.uneditable_foreground)
+=======
+        self.grid_container = Frame(self, bg=self.uneditable_foreground)
+>>>>>>> cda2d6d98697ca5a4e2f074a58cc07d268ab6574
         self.cell_container = [[Frame(self.grid_container, width=self.cell_width, height=self.cell_height) for _ in range(self.board_width)] for _ in range(self.board_height)]
         self.grid = [
             [
@@ -107,13 +127,17 @@ class MainGame(Tk):
                     disabledforeground=self.editable_foreground if self.current_board_editable_map[y][x] else self.uneditable_foreground,
                     state="disabled",
                     font=Font(size=self.font_size, weight="bold"),
+<<<<<<< HEAD
                     highlightthickness=0,
+=======
+>>>>>>> cda2d6d98697ca5a4e2f074a58cc07d268ab6574
                     cursor="arrow"
                 ) for x in range(self.board_width)
             ] for y in range(self.board_height)
         ]
 
         self.button_container = Frame(self, bg=self.background)
+<<<<<<< HEAD
         self.buttons = {i: Button(self.button_container, image=self.icons[i], command=self.button_commands[i], bg=self.background, highlightthickness=0, relief="flat", highlightbackground=self.background, borderwidth=0) for i in self.icon_name[:-1]}
 
         self.props_container = Frame(self.left_container, bg=self.background)
@@ -126,6 +150,12 @@ class MainGame(Tk):
         self.id_label.pack(side="left")
         self.timer.pack(side="right")
         self.grid_container.pack()
+=======
+        self.buttons = {i: Button(self.button_container, image=self.icons[i], command=self.button_commands[i], bg=self.background, relief="flat") for i in self.icon_name[:-1]}
+
+    def placeWidget(self):
+        self.grid_container.pack(padx=(20, 0), pady=20, side="left")
+>>>>>>> cda2d6d98697ca5a4e2f074a58cc07d268ab6574
         [
             [
                 self.cell_container[y][x].pack_propagate(False)
@@ -337,6 +367,7 @@ class MainGame(Tk):
         self.updateForeground()
 
     def generateBoard(self, difficulty="hard"):
+<<<<<<< HEAD
         if difficulty == "custom":
             self.question_board = [[int(j) for j in list(i.strip())] for i in open("test.sudoku", "r").readlines()]
             self.current_id = "CUSTOM"
@@ -365,6 +396,28 @@ class MainGame(Tk):
         self.start_time = time.time()
         self.current_time = 0
         self.is_finished = False
+=======
+        if difficulty == "custom": return
+        request_headers = {
+            'x-requested-with': 'XMLHttpRequest', 
+            'user-agent': ua().random
+        }
+        if difficulty == "daily": response = requests.get(f'http://dailysudoku.com/cgi-bin/sudoku/get_board.pl', headers=request_headers).json()
+        else: response = requests.get(f'https://sudoku.com/api/level/{difficulty}', headers=request_headers).json()
+        if response:
+            raw_data = response['numbers'].replace('.', '0') if difficulty == "daily" else response['mission']
+            self.question_board = [[int(j) for j in raw_data[i:i+self.board_width]] for i in range(0, self.board_width*self.board_height, self.board_height)]
+            
+            if len(self.question_board[0]) == self.board_width and len(self.question_board) == self.board_height:
+                self.current_board = copy.deepcopy(self.question_board)
+                self.updateBoard(run="new")
+                self.generateEditableMap()
+            else:
+                raise RuntimeError('Sudoku board size doesn\'t match')
+        else:
+            raise RuntimeError('Sudoku board fetching failed')
+
+>>>>>>> cda2d6d98697ca5a4e2f074a58cc07d268ab6574
         self.resumeGame()
 
     def redoBoard(self):
@@ -376,8 +429,11 @@ class MainGame(Tk):
                         self.writeCell(y, x, "")
                         self.current_board[y][x] = 0
             self.escapeHighlightCallback(None)
+<<<<<<< HEAD
             self.start_time = time.time()
             self.current_time = 0
+=======
+>>>>>>> cda2d6d98697ca5a4e2f074a58cc07d268ab6574
 
     def cleanupBoard(self):
         confirm = messagebox.askyesnocancel("Wanna clear all?","Do you wanna keep cells with less than two candidates? Select NO to clean up the whole board and leave cells with definite answer only.", icon="warning")
@@ -397,12 +453,16 @@ class MainGame(Tk):
         self.buttons['play'].config(image=self.icons['play'], command=self.resumeGame)
         self.escapeHighlightCallback(None)
 
+<<<<<<< HEAD
         self.is_playing = False
 
+=======
+>>>>>>> cda2d6d98697ca5a4e2f074a58cc07d268ab6574
     def resumeGame(self):
         for y in range(self.board_height):
             for x in range(self.board_width):
                 num = self.current_board[y][x]
+<<<<<<< HEAD
                 self.writeCell(y, x, num if num else "", "ans" if len(str(num)) == 1 else "cand")
         
         self.is_playing = True
@@ -416,6 +476,12 @@ class MainGame(Tk):
             self.current_time += 1
             self.timer.config(text="{}:{}".format(str(self.current_time//60).zfill(2), str(self.current_time%60).zfill(2)))
         
+=======
+                self.writeCell(y, x, num if num else "")
+
+        self.buttons['play'].config(image=self.icons['pause'], command=self.pauseGame)
+
+>>>>>>> cda2d6d98697ca5a4e2f074a58cc07d268ab6574
     def getCandidate(self):
         for y in range(self.board_height):
             for x in range(self.board_width):
@@ -466,8 +532,11 @@ class MainGame(Tk):
             messagebox.showinfo('Congrats!', 'You win the game! The board has been archived.')
             self.escapeHighlightCallback(None)
             self.lockAllCell()
+<<<<<<< HEAD
             self.is_playing = False
             self.is_finished = True
+=======
+>>>>>>> cda2d6d98697ca5a4e2f074a58cc07d268ab6574
             self.saveBoardToHistory()
         else:
             messagebox.showerror('Oops!', 'Something went wrong! Please check your board carefully.')
@@ -482,6 +551,7 @@ class MainGame(Tk):
             try: data = json.loads(b85decode(encoded.read()[::2].encode('utf-8')).decode('utf-8').replace('\'', '"'))
             except: data = []
             data += [{
+<<<<<<< HEAD
                 'id': self.current_id,
                 'question': b85encode(''.join([''.join(str(j) for j in i) for i in self.question_board]).encode('utf-8')).decode('utf-8'),
                 'answer': b85encode(''.join([''.join(str(j) for j in i) for i in self.current_board]).encode('utf-8')).decode('utf-8'),
@@ -489,6 +559,13 @@ class MainGame(Tk):
                 'started': self.start_time,
                 'ended': self.start_time+self.current_time,
                 'time_taken': self.current_time
+=======
+                'question': b85encode(''.join([''.join(str(j) for j in i) for i in self.question_board]).encode('utf-8')).decode('utf-8'),
+                'answer': b85encode(''.join([''.join(str(j) for j in i) for i in self.current_board]).encode('utf-8')).decode('utf-8'),
+                'difficulty': 'hard', 
+                'ended': 0,
+                'time_taken': 0
+>>>>>>> cda2d6d98697ca5a4e2f074a58cc07d268ab6574
             }]
             with open('history.sudoku', 'w') as file:
                 raw = b85encode(str(data).encode('utf-8')).decode('utf-8') 
@@ -529,7 +606,10 @@ class GameArchive(Toplevel):
     def __init__(self, master):
         super().__init__(master)
         master.withdraw()
+<<<<<<< HEAD
         master.is_playing = False
+=======
+>>>>>>> cda2d6d98697ca5a4e2f074a58cc07d268ab6574
 
         self.board_width, self.board_height = self.master.board_width, self.master.board_height
         self.region_width, self.region_height = self.master.region_width, self.master.region_height
@@ -589,8 +669,12 @@ class GameArchive(Toplevel):
         self.master.eval(f'tk::PlaceWindow {self} center')
 
     def setupWidget(self):
+<<<<<<< HEAD
         self.left_container = Frame(self, bg=self.background)
         self.grid_container = Frame(self.left_container, bg=self.uneditable_foreground)
+=======
+        self.grid_container = Frame(self, bg=self.master.uneditable_foreground)
+>>>>>>> cda2d6d98697ca5a4e2f074a58cc07d268ab6574
         self.cell_container = [[Frame(self.grid_container, width=self.cell_width, height=self.cell_height) for _ in range(self.board_width)] for _ in range(self.board_height)]
         self.grid = [
             [
@@ -604,13 +688,18 @@ class GameArchive(Toplevel):
                     disabledforeground=self.uneditable_foreground,
                     state="disabled",
                     font=Font(size=self.font_size, weight="bold"),
+<<<<<<< HEAD
                     cursor="arrow",
                     highlightthickness=0
+=======
+                    cursor="arrow"
+>>>>>>> cda2d6d98697ca5a4e2f074a58cc07d268ab6574
                 ) for x in range(self.board_width)
             ] for y in range(self.board_height)
         ]
 
         self.button_container = Frame(self, bg=self.background)
+<<<<<<< HEAD
         self.buttons = {i: Button(self.button_container, image=self.icons[i], command=self.button_commands[i], bg=self.background, relief="flat", highlightbackground=self.background) for i in self.icon_name[:-1]}
         self.props_container = Frame(self.left_container, bg=self.background)
         self.id_label = Label(self.props_container, text="#000000", bg=self.background, fg=self.uneditable_foreground)
@@ -622,6 +711,14 @@ class GameArchive(Toplevel):
         self.grid_container.pack()
         [
                 [
+=======
+        self.buttons = {i: Button(self.button_container, image=self.icons[i], command=self.button_commands[i], bg=self.background, relief="flat") for i in self.icon_name[:-1]}
+
+    def placeWidget(self):
+        self.grid_container.pack(padx=(20, 0), pady=20, side="left")
+        [
+            [
+>>>>>>> cda2d6d98697ca5a4e2f074a58cc07d268ab6574
                 self.cell_container[y][x].pack_propagate(False)
                 for x in range(self.board_width)
             ] for y in range(self.board_height)
@@ -653,7 +750,10 @@ class GameArchive(Toplevel):
 
     def quit(self, master):
         master.deiconify()
+<<<<<<< HEAD
         master.resumeGame()
+=======
+>>>>>>> cda2d6d98697ca5a4e2f074a58cc07d268ab6574
         self.destroy()
 
     def writeCell(self, y, x, i):
@@ -703,7 +803,10 @@ class GameArchive(Toplevel):
 
     def insertBoard(self, show="q"):
         board = self.data[self.current_data_index]
+<<<<<<< HEAD
         _id = "#"+board["id"]
+=======
+>>>>>>> cda2d6d98697ca5a4e2f074a58cc07d268ab6574
 
         question_board = b85decode(board['question'].encode('utf-8')).decode('utf-8')
         answer_board = b85decode(board['answer'].encode('utf-8')).decode('utf-8')
@@ -715,8 +818,12 @@ class GameArchive(Toplevel):
         self.clearBoard()
 
         board_to_show = self.question_board if show == "q" else self.answer_board
+<<<<<<< HEAD
         
         self.id_label.config(text=_id)
+=======
+
+>>>>>>> cda2d6d98697ca5a4e2f074a58cc07d268ab6574
         for y in range(self.board_height):
             for x in range(self.board_width):
                 num = board_to_show[y][x]
@@ -789,8 +896,11 @@ class MenuWindow(Toplevel):
                 font=Font(size=14, weight="bold"),
                 command=partial(self.master.startGame, diff), 
                 bg=self.master.uneditable_foreground, 
+<<<<<<< HEAD
                 highlightbackground=self.master.uneditable_foreground,
                 highlightthickness=0,
+=======
+>>>>>>> cda2d6d98697ca5a4e2f074a58cc07d268ab6574
                 fg=self.master.uneditable_selected_foreground,
                 relief='flat',
                 width=100,
@@ -819,4 +929,8 @@ class MenuWindow(Toplevel):
         self.master.focus()
 
 root = MainGame()
+<<<<<<< HEAD
 root.mainloop()
+=======
+root.mainloop()
+>>>>>>> cda2d6d98697ca5a4e2f074a58cc07d268ab6574
