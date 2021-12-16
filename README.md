@@ -41,8 +41,7 @@ The remake version was made a year after the beta version had been released. My 
 - [ ] Play your own board
 - [ ] Save board for later
 - [ ] View your statistic
-- [ ] OP Chain Mode
+- [x] OP Chain Mode
 - [ ] Print the sudoku board on a paper
 - [ ] Save the sudoku board to PDF Docs or Images
 - [ ] View the sudoku board archives and redo any boards if you want
-- [ ] 
